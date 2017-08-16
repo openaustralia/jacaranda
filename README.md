@@ -54,9 +54,8 @@ bundle exec rspec
 
 ## Usage
 
-This scraper requires three environment variables:
+This scraper requires these environment variables:
 
-* `MORPH_GITHUB_OAUTH_ACCESS_TOKEN` to talk to the GitHub API. You must generate a [personal access token](https://github.com/settings/tokens) with the `repo` permission.
 * `MORPH_SLACK_CHANNEL_WEBHOOK_URL` to post the message to a channel in Slack. You can get a URL by adding an _Incoming Webhook_ customer integration in your Slack org.
 * `MORPH_LIVE_MODE` determines if the scraper actually posts to the Slack channel `#townsquare` and save to the database
 
@@ -64,7 +63,6 @@ When developing locally, you can add these environment variables to a [`.env` fi
 
 ``` bash
 MORPH_SLACK_CHANNEL_WEBHOOK_URL="https://hooks.slack.com/services/XXXXXXXXXXXXX"
-MORPH_GITHUB_OAUTH_ACCESS_TOKEN=XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 MORPH_LIVE_MODE=false
 ```
 
@@ -81,6 +79,108 @@ Then edit to taste.
 You can also run this as a scraper on [Morph](https://morph.io).
 
 To get started [see the documentation](https://morph.io/documentation)
+
+## Contributing
+
+## Adding new runners to Jacaranda
+
+Jacaranda has a very simple model for adding new runners.
+
+Runners pull information from (sometimes multiple) sources, and posts a message into Slack.
+
+To add a new runner, open up `scraper.rb` and define the following class:
+
+``` ruby
+module Jacaranda
+  # A new runner for my new service
+  class MyNewRunner < Runner
+    class << self
+      def build
+        [
+          'My text here.'
+        ]
+      end
+    end
+  end
+end
+```
+
+Then run the scraper:
+
+``` bash
+MORPH_LIVE_MODE=false bundle exec ruby scraper.rb --runners MyNewRunner
+```
+
+You'll see output something like this:
+
+```
+These are the runners we will execute:
+
+MyNewRunner
+
+[MyNewRunner] We have not posted an update during this fortnight.
+[MyNewRunner] Not posting to Slack.
+[MyNewRunner] Not recording the message in the database.
+
+> My text here.
+```
+
+That's it.
+
+While displaying some static text is a nice start, you'll want to call out to your app to pull information in:
+
+``` ruby
+module Jacaranda
+  # A new runner for my new service
+  class MyNewRunner < Runner
+    class << self
+      def build
+        [
+          MyApp.status_text(period: last_fortnight),
+        ]
+      end
+    end
+  end
+end
+```
+
+We're using a built-in helper method called `last_fortnight` to give us a date range for the last fortnight:
+
+``` ruby
+last_fortnight # => [ Mon, 31 Jul 2017, Tue, 01 Aug 2017, ... ]
+```
+
+We pass this as the `period` parameter to the `status_text` method on the `MyApp` class.
+
+Both the `MyApp` class and `status_text` method don't exist yet. Let's add them:
+
+``` ruby
+# lib/myapp.rb
+
+# MyApp stats from MyApp
+class MyApp
+  class << self
+    def status_text(period:)
+      [
+        ':tada:',
+        count('requests:new', period: period),
+        'new requests were made through My App in the last fortnight.'
+      ].join(' ')
+    end
+
+    def count(query, period)
+      start  = period.first
+      finish = period.last
+
+      # Make a call out to your service here ...
+    end
+  end
+end
+```
+
+The `status_text` method is very simple – it accepts a time period it needs to produce text for, and returns a string of text.
+
+Typically there is a `count` method used to get hit some endpoint or scrape some pages, and generate aggregate statistics. The exact implementation is up to you! Check out the `PlanningAlerts` and `RightToKnow` classes to see some more complex use cases.
 
 ## Image credit
 

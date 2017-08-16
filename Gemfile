@@ -18,6 +18,7 @@ group :development do
 end
 
 group :test do
+  gem 'delorean'
   gem 'faker'
   gem 'rspec'
   gem 'rubocop'

@@ -1,0 +1,53 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://hooks.slack.com/services
+    body:
+      encoding: UTF-8
+      string: '{"username":"Jacaranda","text":"Ipsum laboriosam et iste atque. In
+        et molestiae est facilis suscipit voluptatum est.","channel":"#bottesting"}'
+    headers:
+      Accept:
+      - "*/*; q=0.5, application/xml"
+      Accept-Encoding:
+      - gzip, deflate
+      Content-Length:
+      - '142'
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 400
+      message: Bad Request
+    headers:
+      Content-Type:
+      - text/html
+      Content-Length:
+      - '0'
+      Connection:
+      - keep-alive
+      Date:
+      - Tue, 15 Aug 2017 04:21:52 GMT
+      Location:
+      - https://hooks.slack.com/services
+      Referrer-Policy:
+      - no-referrer
+      Server:
+      - Apache
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Slack-Backend:
+      - h
+      X-Cache:
+      - Miss from cloudfront
+      Via:
+      - 1.1 9baa2b0673d64e31b59031d8b35561e6.cloudfront.net (CloudFront)
+      X-Amz-Cf-Id:
+      - x14BaHcXxi8frk_zhi66-cN35IXbkko3J1OsPqlcNmyIMhr608CURA==
+    body:
+      encoding: UTF-8
+      string: ''
+    http_version:
+  recorded_at: Tue, 15 Aug 2017 04:21:52 GMT
+recorded_with: VCR 3.0.3

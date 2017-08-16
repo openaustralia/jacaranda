@@ -5,3 +5,4 @@ Metrics/LineLength:
 Metrics/BlockLength:
   Exclude:
     - 'spec/unit_spec.rb'
+    - 'spec/runner_spec.rb'
