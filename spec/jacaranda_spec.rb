@@ -80,6 +80,7 @@ describe 'Jacaranda' do
       set_environment_variable('MORPH_LIVE_MODE', 'true')
       set_environment_variable('MORPH_SLACK_CHANNEL_WEBHOOK_URL', url)
       mock_runners
+      time_travel_to("next #{Jacaranda::BaseRunner.post_day}")
     end
 
     it 'executes the runners in alphabetical order' do

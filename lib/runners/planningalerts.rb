@@ -79,6 +79,7 @@ module PlanningAlerts
 
       def change_sentence(last_fortnight, fortnight_before_last)
         percentage_change_from_fortnight_before = last_fortnight.percent_of(fortnight_before_last) - 100
+        percentage_change_from_fortnight_before = 0 if percentage_change_from_fortnight_before.nan?
         percentage_change_from_fortnight_before = percentage_change_from_fortnight_before.round(1).floor
 
         [
@@ -138,6 +139,7 @@ module PlanningAlerts
 
   # The runner for PlanningAlerts
   class Runner < Jacaranda::BaseRunner
+    default_post_day 'Monday'
     class << self
       def build
         [

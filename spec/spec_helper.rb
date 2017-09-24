@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
-require_relative('../scraper')
 require 'pry'
 require 'webmock/rspec'
 require 'addressable'
 require 'vcr'
 require 'faker'
 require 'delorean'
+require_relative('../scraper')
+require_relative('runners/shared_examples')
 
 VCR.configure do |c|
   c.cassette_library_dir = 'spec/vcr_cassettes'

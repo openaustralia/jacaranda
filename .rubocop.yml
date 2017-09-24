@@ -7,5 +7,4 @@ Metrics/BlockLength:
   Exclude:
     - 'spec/unit_spec.rb'
     - 'spec/jacaranda_spec.rb'
-    - 'spec/runners/base_runner_spec.rb'
-    - 'spec/runners/planningalerts_spec.rb'
+    - 'spec/runners/*.rb'
