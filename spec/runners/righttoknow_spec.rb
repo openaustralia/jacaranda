@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'RightToKnow' do
+describe RightToKnow do
   let(:fortnight_start) { Date.parse('2017-07-24') }
   let(:fortnight_end)   { Date.parse('2017-08-06') }
   let(:last_fortnight)  { (fortnight_start..fortnight_end).to_a }
@@ -28,5 +28,9 @@ describe 'RightToKnow' do
         expect(text).to eq(':trophy: 7 requests were marked successful!')
       end
     end
+  end
+
+  describe RightToKnow::Runner do
+    it_behaves_like 'a runner'
   end
 end

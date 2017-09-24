@@ -2,14 +2,6 @@
 
 require 'spec_helper'
 
-def all_requests
-  WebMock::RequestRegistry.instance.requested_signatures.hash.keys
-end
-
-def all_request_bodies
-  all_requests.map { |r| JSON.parse(r.body) }
-end
-
 describe 'Jacaranda' do
   describe '.parse' do
     context 'when filtering' do
@@ -70,7 +62,10 @@ describe 'Jacaranda' do
     let(:url) { Faker::Internet.url('hooks.slack.com') }
     let(:text) { Faker::Lorem.paragraph(2) }
     let(:mock_runner_names) { %w[Alpha Bravo Charlie Delta Echo Foxtrot].shuffle }
-    let(:mock_runners) do
+    let(:mock_runner_webhook_envs) do
+      mock_runner_names.map { |name| "MORPH_RUNNERS_#{name.upcase}_WEBHOOK_URL" }
+    end
+    let!(:mock_runners) do
       mock_runner_names.map do |name|
         Object.const_set(name, Class.new(Jacaranda::BaseRunner))
       end
@@ -78,8 +73,8 @@ describe 'Jacaranda' do
 
     before(:each) do
       set_environment_variable('MORPH_LIVE_MODE', 'true')
-      set_environment_variable('MORPH_SLACK_CHANNEL_WEBHOOK_URL', url)
-      mock_runners
+      mock_runner_webhook_envs.map { |value| set_environment_variable(value, url) }
+      time_travel_to("next #{Jacaranda::BaseRunner.post_day}")
     end
 
     it 'executes the runners in alphabetical order' do

@@ -52,6 +52,7 @@ module RightToKnow
 
   # The runner for RightToKnow
   class Runner < Jacaranda::BaseRunner
+    default_post_day 'Wednesday'
     class << self
       def build
         [

@@ -69,15 +69,18 @@ bundle exec rspec
 
 ## Usage
 
-This scraper requires these environment variables:
+The scraper looks for these environment variables:
 
-* `MORPH_SLACK_CHANNEL_WEBHOOK_URL` to post the message to a channel in Slack. You can get a URL by adding an _Incoming Webhook_ customer integration in your Slack org.
-* `MORPH_LIVE_MODE` determines if the scraper actually posts to the Slack channel `#townsquare` and save to the database
+* `MORPH_RUNNERS`, a comma separated list of runners to execute. If you don't set this, Jacaranda will execute all known runners. You can use the `--list-runners` option to get a list of all runners Jacaranda knows about.
+* `MORPH_RUNNERS_RIGHTTOKNOW_WEBHOOK_URL`, the webhook URL to post _Right To Know_ messages to Slack. You can get a URL by adding an _Incoming Webhook_ customer integration in your Slack org.
+* `MORPH_RUNNERS_RIGHTTOKNOW_WEBHOOK_CHANNEL`, the Slack channel to post _Right To Know_ messages into.
+* `MORPH_RUNNERS_PLANNINGALERTS_WEBHOOK_URL`, the webhook URL to post _PlanningAlerts_ messages to Slack. You can get a URL by adding an _Incoming Webhook_ customer integration in your Slack org.
+* `MORPH_RUNNERS_PLANNINGALERTS_WEBHOOK_CHANNEL`, the Slack channel to post _PlanningAlerts_ messages into.
+* `MORPH_LIVE_MODE`, to determine if the scraper actually posts to Slack and saves a record of the post to the database. Defaults to `false`.
 
 When developing locally, you can add these environment variables to a [`.env` file](https://github.com/bkeepers/dotenv) so the scraper loads them when it runs:
 
 ``` bash
-MORPH_SLACK_CHANNEL_WEBHOOK_URL="https://hooks.slack.com/services/XXXXXXXXXXXXX"
 MORPH_LIVE_MODE=false
 ```
 
@@ -93,13 +96,7 @@ Then edit to taste.
 
 You can also run this as a scraper on [Morph](https://morph.io).
 
-To get started [see the documentation](https://morph.io/documentation)
-
-You can optionally set `MORPH_RUNNERS` to choose what runners are executed. Go to the settings page of the scraper, and set the value to be a comma separated list of runners:
-
-```
-RightToKnow,PlanningAlerts
-```
+To get started [see the documentation](https://morph.io/documentation).
 
 ## Contributing
 
@@ -135,7 +132,7 @@ MORPH_LIVE_MODE=false bundle exec ruby scraper.rb --runners MyService
 
 *Note: The `--runners` option is used only in development. Morph will run the scraper with no arguments.*
 
-*Note: You can use the `--list-runners` option to get a list of all runners Jacaranda knows about.
+*Note: You can use the `--list-runners` option to get a list of all runners Jacaranda knows about.*
 
 You'll see output something like this:
 

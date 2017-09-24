@@ -56,7 +56,7 @@ module Jacaranda
     puts
     puts runners.map { |r| r.to_s.split('::').first }.join("\n")
     puts
-    sleep(2)
+    sleep(2) unless const_defined?(:RSpec)
   end
 
   def self.list_runners

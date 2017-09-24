@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe 'Jacaranda' do
   describe 'BaseRunner' do
-    describe '#validate_environment_varables!' do
+    describe '#validate_environment_variables!' do
       let(:envvars) { Jacaranda::BaseRunner.required_environment_variables }
       subject { -> { Jacaranda::BaseRunner.validate_environment_variables! } }
 
@@ -80,12 +80,13 @@ describe 'Jacaranda' do
       after(:each) { ScraperWiki.sqliteexecute('DELETE FROM posts') }
     end
 
-    describe '.run' do
+    describe '#run' do
       let(:url) { Faker::Internet.url('hooks.slack.com') }
       let(:text) { Faker::Lorem.paragraph(2) }
+      let(:webhook_url_env) { 'MORPH_RUNNERS_JACARANDA_WEBHOOK_URL' }
 
       before(:each) do
-        set_environment_variable('MORPH_SLACK_CHANNEL_WEBHOOK_URL', url)
+        set_environment_variable(webhook_url_env, url)
         set_environment_variable('MORPH_LIVE_MODE', 'true')
       end
 
@@ -99,6 +100,10 @@ describe 'Jacaranda' do
       end
 
       context 'not posted in the last fortnight' do
+        before(:each) do
+          time_travel_to("next #{Jacaranda::BaseRunner.post_day}")
+        end
+
         it 'runs the scraper' do
           VCR.use_cassette('post_to_slack_webhook', match_requests_on: [:host]) do
             expect(Jacaranda::BaseRunner.run).to be true
@@ -107,17 +112,62 @@ describe 'Jacaranda' do
         end
       end
 
+      context 'nominated day of the week' do
+        before(:each) do
+          time_travel_to("next #{Jacaranda::BaseRunner.post_day}")
+        end
+
+        it 'runs the scraper' do
+          vcr_options = { match_requests_on: [:host], allow_playback_repeats: true }
+          VCR.use_cassette('post_to_slack_webhook', vcr_options) do
+            expect(Jacaranda::BaseRunner.run).to be true
+            expect(a_request(:post, url)).to have_been_made.times(1)
+          end
+        end
+      end
+
+      context 'not nominated day of the week' do
+        let(:days) { (1..6).map { |i| Date.parse(Jacaranda::BaseRunner.post_day) + i } }
+
+        it 'does not run the scraper' do
+          days.each do |day|
+            time_travel_to(day)
+            expect(Jacaranda::BaseRunner.run).to be false
+            expect(a_request(:post, url)).to have_been_made.times(0)
+          end
+        end
+      end
+
       after(:each) do
         restore_env
-        ScraperWiki.sqliteexecute('DELETE FROM posts')
+        query = %(SELECT sql FROM sqlite_master where name = 'posts' AND type = 'table')
+        ScraperWiki.sqliteexecute('DELETE FROM posts') if ScraperWiki.sqliteexecute(query).any?
       end
     end
 
     describe '#post_to_slack' do
       let(:url) { Faker::Internet.url('hooks.slack.com') }
       let(:text) { Faker::Lorem.paragraph(2) }
+      let(:webhook_url_env) { 'MORPH_RUNNERS_JACARANDA_WEBHOOK_URL' }
+      let(:webhook_channel_env) { 'MORPH_RUNNERS_JACARANDA_WEBHOOK_CHANNEL' }
 
-      before(:each) { set_environment_variable('MORPH_SLACK_CHANNEL_WEBHOOK_URL', url) }
+      before(:each) { set_environment_variable(webhook_url_env, url) }
+
+      context 'with Slack channel override' do
+        let(:channel_name) { '#hello' }
+        before(:each) { set_environment_variable(webhook_channel_env, channel_name) }
+
+        it 'POSTs to specified channel', :aggregate_failures do
+          VCR.use_cassette('post_to_slack_webhook', match_requests_on: [:host]) do
+            Jacaranda::BaseRunner.post(text)
+            expect(a_request(:post, url)).to have_been_made.times(1)
+
+            all_request_bodies.each do |request|
+              expect(request['channel']).to eq(channel_name)
+            end
+          end
+        end
+      end
 
       context 'posting to Slack is successful' do
         it 'POSTs to webhook URL' do
@@ -146,6 +196,52 @@ describe 'Jacaranda' do
 
       after(:each) do
         restore_env
+      end
+    end
+
+    describe '#post_day' do
+      subject { Jacaranda::BaseRunner }
+      let(:runner_name) { subject.to_s.split('::').first.downcase }
+      let(:runner_env_post_day) { "MORPH_RUNNERS_#{runner_name.upcase}_POST_DAY" }
+      let(:days_of_week) { (0..6).map { |i| (Date.today + i).strftime('%A') } }
+
+      it 'returns a default day' do
+        expect(subject.post_day).to_not be nil
+      end
+
+      it 'is set by environment variables', :aggregate_failures do
+        days_of_week.each do |day_name|
+          set_environment_variable(runner_env_post_day, day_name)
+          expect(subject.post_day).to eq(day_name)
+        end
+      end
+
+      it 'validates the day set by environment variables', :aggregate_failures do
+        days_of_week.each do |day_name|
+          set_environment_variable(runner_env_post_day, "zzzz#{day_name}")
+          expect { subject.post_day }.to raise_error(SystemExit)
+        end
+      end
+
+      after(:each) { restore_env }
+    end
+
+    describe '#default_post_day' do
+      context 'getter' do
+        it 'defaults to Monday' do
+          expect(Jacaranda::BaseRunner.default_post_day).to eq('Monday')
+        end
+      end
+
+      context 'setter' do
+        it 'converts to full day name' do
+          Jacaranda::BaseRunner.default_post_day('sun')
+          expect(Jacaranda::BaseRunner.default_post_day).to eq('Sunday')
+        end
+
+        it 'validates day name' do
+          expect { Jacaranda::BaseRunner.default_post_day('zzz') }.to raise_error(SystemExit)
+        end
       end
     end
   end

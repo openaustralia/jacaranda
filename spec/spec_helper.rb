@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
-require_relative('../scraper')
 require 'pry'
 require 'webmock/rspec'
 require 'addressable'
 require 'vcr'
 require 'faker'
 require 'delorean'
+require_relative('../scraper')
+require_relative('runners/shared_examples')
 
 VCR.configure do |c|
   c.cassette_library_dir = 'spec/vcr_cassettes'
@@ -67,3 +68,11 @@ def set_environment_variable(name, value)
 end
 
 def puts(*args); end
+
+def all_requests
+  WebMock::RequestRegistry.instance.requested_signatures.hash.keys
+end
+
+def all_request_bodies
+  all_requests.map { |r| JSON.parse(r.body) }
+end
