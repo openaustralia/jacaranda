@@ -6,6 +6,7 @@ module RightToKnow
   # RightToKnow stats from righttoknow.org.au
   class Website
     class << self
+      include Jacaranda::Runner::Posts
       def count(query, period:)
         start  = period.first.strftime('%D')
         finish = period.last.strftime('%D')
@@ -27,7 +28,7 @@ module RightToKnow
         [
           ':saxophone:',
           count('variety:sent', period: period),
-          'new requests were made through Right To Know last fortnight.'
+          "new requests were made through Right To Know last #{frequency_adjective}."
         ].join(' ')
       end
 
@@ -52,12 +53,13 @@ module RightToKnow
 
   # The runner for RightToKnow
   class Runner < Jacaranda::BaseRunner
+    default_post_day 'Wednesday'
     class << self
       def build
         [
-          RightToKnow::Website.new_requests_text(period: last_fortnight),
-          RightToKnow::Website.annotations_text(period: last_fortnight),
-          RightToKnow::Website.success_text(period: last_fortnight)
+          RightToKnow::Website.new_requests_text(period: last_period),
+          RightToKnow::Website.annotations_text(period: last_period),
+          RightToKnow::Website.success_text(period: last_period)
         ]
       end
     end

@@ -45,4 +45,8 @@ describe 'PlanningAlerts' do
       end
     end
   end
+
+  describe PlanningAlerts::Runner do
+    it_behaves_like 'a runner'
+  end
 end

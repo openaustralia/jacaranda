@@ -17,6 +17,7 @@ module PlanningAlerts
   # PlanningAlerts stats from planningalerts.org.au
   class Website
     class << self
+      include Jacaranda::Runner::Posts
       def new_subscribers_text(period:)
         before_period = determine_period_before(period)
 
@@ -77,14 +78,15 @@ module PlanningAlerts
         ].join(' ')
       end
 
-      def change_sentence(last_fortnight, fortnight_before_last)
-        percentage_change_from_fortnight_before = last_fortnight.percent_of(fortnight_before_last) - 100
-        percentage_change_from_fortnight_before = percentage_change_from_fortnight_before.round(1).floor
+      def change_sentence(last_period, period_before_last)
+        percentage_change_from_period_before = last_period.percent_of(period_before_last) - 100
+        percentage_change_from_period_before = 0 if percentage_change_from_period_before.nan?
+        percentage_change_from_period_before = percentage_change_from_period_before.round(1).floor
 
         [
           'That’s',
-          percentage_change_in_words(percentage_change_from_fortnight_before),
-          'than the fortnight before.'
+          percentage_change_in_words(percentage_change_from_period_before),
+          "than the #{frequency_adjective} before."
         ].join(' ')
       end
 
@@ -138,12 +140,13 @@ module PlanningAlerts
 
   # The runner for PlanningAlerts
   class Runner < Jacaranda::BaseRunner
+    default_post_day 'Monday'
     class << self
       def build
         [
-          PlanningAlerts::Website.new_subscribers_text(period: last_fortnight),
-          PlanningAlerts::Website.new_unsubscribers_text(period: last_fortnight),
-          PlanningAlerts::GitHub.commits_text(period: last_fortnight),
+          PlanningAlerts::Website.new_subscribers_text(period: last_period),
+          PlanningAlerts::Website.new_unsubscribers_text(period: last_period),
+          PlanningAlerts::GitHub.commits_text(period: last_period),
           PlanningAlerts::Website.total_subscribers_text
         ]
       end
